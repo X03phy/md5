@@ -18,6 +18,12 @@ static void md5_transform( t_md5_ctx *ctx )
 	uint32_t f, g, tmp;
 	uint8_t i;
 
+	for ( i = 0; i < 16; ++i )
+	{
+		W[i] = ( ctx->buffer[i * 4] ) | ( ctx->buffer[i * 4 + 1] << 8 ) |
+			   ( ctx->buffer[i * 4 + 2] << 16 ) | ( ctx->buffer[i * 4 + 3] << 24 );
+	}
+
 	a = ctx->state[0]; b = ctx->state[1]; c = ctx->state[2]; d = ctx->state[3];
 
 	for ( i = 0; i < 64; ++i )
@@ -35,7 +41,7 @@ static void md5_transform( t_md5_ctx *ctx )
 		else if ( i < 48 )
 		{
 			f = H( b, c, d );
-			g = ( 3 * i + 1 ) % 16;
+			g = ( 3 * i + 5 ) % 16;
 		}
 		else
 		{
@@ -46,7 +52,8 @@ static void md5_transform( t_md5_ctx *ctx )
 		tmp = d;
 		d = c;
 		c = b;
-		b = b + LEFTROTATE( ( a + f + K[i] + W[g] ), S[i]);
+		b = b + LEFTROTATE( ( a + f + K[i] + W[g] ), R[i]);
+		a = tmp;
 	}
 
 	ctx->state[0] += a;
@@ -55,7 +62,7 @@ static void md5_transform( t_md5_ctx *ctx )
 	ctx->state[3] += d;
 }
 
-static void sha256_update( t_md5_ctx *ctx, const uint8_t *data, const size_t len )
+static void md5_update( t_md5_ctx *ctx, const uint8_t *data, const size_t len )
 {
 	for ( size_t i = 0; i < len; ++i )
 	{
@@ -70,7 +77,7 @@ static void sha256_update( t_md5_ctx *ctx, const uint8_t *data, const size_t len
 	}
 }
 
-static void sha256_final( uint8_t hash[32], t_md5_ctx *ctx )
+static void md5_final( uint8_t hash[16], t_md5_ctx *ctx )
 {
 	ctx->buffer[ctx->buffer_len++] = 0x80;
 
@@ -78,29 +85,30 @@ static void sha256_final( uint8_t hash[32], t_md5_ctx *ctx )
 	{
 		while ( ctx->buffer_len < 64 )
 			ctx->buffer[ctx->buffer_len++] = 0x00;
-		ms5_transform( ctx );
+		md5_transform( ctx );
 		ctx->buffer_len = 0;
 	}
 
 	while ( ctx->buffer_len < 56 )
 		ctx->buffer[ctx->buffer_len++] = 0x00;
 
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 56 ) & 0xff;
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 48 ) & 0xff;
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 40 ) & 0xff;
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 32 ) & 0xff;
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 24 ) & 0xff;
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 16 ) & 0xff;
-	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 8 ) & 0xff;
 	ctx->buffer[ctx->buffer_len++] = ctx->bitlen & 0xff;
-	ms5_transform( ctx );
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 8 ) & 0xff;
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 16 ) & 0xff;
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 24 ) & 0xff;
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 32 ) & 0xff;
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 40 ) & 0xff;
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 48 ) & 0xff;
+	ctx->buffer[ctx->buffer_len++] = ( ctx->bitlen >> 56 ) & 0xff;
 
-	for ( uint8_t i = 0; i < 8; ++i )
+	md5_transform( ctx );
+
+	for ( uint8_t i = 0; i < 4; ++i )
 	{
-		hash[ i * 4 ] = ( ctx->state[i] >> 24 ) & 0xff;
-		hash[ i * 4 + 1 ] = ( ctx->state[i] >> 16 ) & 0xff;
-		hash[ i * 4 + 2 ] = ( ctx->state[i] >> 8 ) & 0xff;
-		hash[ i * 4 + 3 ] = ( ctx->state[i] ) & 0xff;
+		hash[i * 4] = ( ctx->state[i] ) & 0xff;
+		hash[i * 4 + 1] = ( ctx->state[i] >> 8 ) & 0xff;
+		hash[i * 4 + 2] = ( ctx->state[i] >> 16 ) & 0xff;
+		hash[i * 4 + 3] = ( ctx->state[i] >> 24 ) & 0xff;
 	}
 }
 

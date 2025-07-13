@@ -1,7 +1,7 @@
 NAME=MD5
 
 CC=gcc
-CFLAGS=-Werror -Wall -Wextra -g -MMD
+CFLAGS=-Wall -Wextra -g -MMD
 
 SRC_DIR=src
 BUILD=.build

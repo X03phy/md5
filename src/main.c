@@ -1,6 +1,12 @@
 #include "md5.h"
+
+/* For SHA256() */
 #include <openssl/md5.h>
+
+/* For printf() */
 #include <stdio.h>
+
+/* For memcmp() */
 #include <string.h>
 
 int main( int argc, char **argv )
@@ -11,22 +17,22 @@ int main( int argc, char **argv )
 		return ( 1 );
 	}
 
-	unsigned char hash[SHA256_DIGEST_LENGTH];
-	unsigned char my_hash[SHA256_DIGEST_LENGTH];
+	unsigned char hash[16];
+	unsigned char my_hash[16];
 
-	SHA256( ( const unsigned char * ) argv[1], strlen( argv[1] ), hash );
-	printf( "openssl SHA256: " );
-	for ( uint8_t i = 0; i < SHA256_DIGEST_LENGTH; ++i )
+	MD5( ( const unsigned char * ) argv[1], strlen( argv[1] ), hash );
+	printf( "openssl MD5: " );
+	for ( uint8_t i = 0; i < 16; ++i )
 		printf( "%02x", hash[i] );
 	printf( "\n" );
 
-	sha256( ( const unsigned char * ) argv[1], strlen(argv[1]), my_hash );
-	printf( "my SHA256:      " );
-	for ( uint8_t i = 0; i < SHA256_DIGEST_LENGTH; ++i )
+	md5( ( const unsigned char * ) argv[1], strlen(argv[1]), my_hash );
+	printf( "my MD5:      " );
+	for ( uint8_t i = 0; i < 16; ++i )
 		printf( "%02x", my_hash[i] );
 	printf("\n");
 
-	if ( !memcmp( ( const char * ) hash, ( const char * ) my_hash, SHA256_DIGEST_LENGTH ) )
+	if ( !memcmp( ( const char * ) hash, ( const char * ) my_hash, 16 ) )
 		printf( "OK\n" );
 	else
 		printf( "KO\n" );
