@@ -1,4 +1,4 @@
-NAME=MD5
+NAME=md5
 
 CC=gcc
 CFLAGS=-Wall -Wextra -g -MMD
